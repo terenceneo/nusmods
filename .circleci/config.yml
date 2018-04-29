@@ -71,6 +71,10 @@ jobs:
       - run: yarn build
       - store_artifacts:
           path: dist
+      - persist_to_workspace:
+          root: ~/nusmods
+          paths:
+            - packages/nusmoderator/dist
       - run: yarn docs
       - store_artifacts:
           path: README.md
@@ -116,12 +120,14 @@ workflows:
       - data-server:
           requires:
             - checkout
-      - nus-scrapers:
-          requires:
-            - checkout
       - nusmoderator:
           requires:
             - checkout
+      - nus-scrapers:
+          requires:
+            - checkout
+            - nusmoderator
       - www:
           requires:
             - checkout
+            - nusmoderator
