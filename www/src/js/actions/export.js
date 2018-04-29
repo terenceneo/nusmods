@@ -27,7 +27,10 @@ export function downloadAsIcal(semester: Semester) {
       import(/* webpackChunkName: "export" */ 'ical-generator'),
       import(/* webpackChunkName: "export" */ 'utils/ical'),
     ]).then(([ical, icalUtils]) => {
-      const { moduleBank: { modules }, timetables } = getState();
+      const {
+        moduleBank: { modules },
+        timetables,
+      } = getState();
       const { timetable } = getSemesterTimetable(semester, timetables);
       const timetableWithLessons = hydrateSemTimetableWithLessons(timetable, modules, semester);
 

@@ -56,7 +56,9 @@ describe('graphql', () => {
         }
       }
     `;
-    const { data: { modules } } = await graphql(schema, query);
+    const {
+      data: { modules },
+    } = await graphql(schema, query);
 
     expect(modules).toHaveLength(2);
   });
@@ -69,7 +71,9 @@ describe('graphql', () => {
         }
       }
     `;
-    const { data: { modules } } = await graphql(schema, query);
+    const {
+      data: { modules },
+    } = await graphql(schema, query);
 
     expect(modules).toHaveLength(1);
   });
@@ -82,7 +86,9 @@ describe('graphql', () => {
         }
       }
     `;
-    const { data: { modules } } = await graphql(schema, query);
+    const {
+      data: { modules },
+    } = await graphql(schema, query);
 
     expect(modules).toHaveLength(0);
   });
@@ -95,7 +101,9 @@ describe('graphql', () => {
         }
       }
     `;
-    const { data: { modules } } = await graphql(schema, query);
+    const {
+      data: { modules },
+    } = await graphql(schema, query);
 
     expect(modules).toHaveLength(1);
     expect(modules[0].code).toBe('anotherTestCode');
