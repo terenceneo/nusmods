@@ -29,6 +29,7 @@ const developmentConfig = merge([
       // to restart the development server for Webpack to discover it. This plugin
       // makes the discovery automatic so you don't have to restart.
       new WatchMissingNodeModulesPlugin(parts.PATHS.node),
+      new WatchMissingNodeModulesPlugin(parts.PATHS.nodeHoisted),
       new HtmlWebpackPlugin({
         template: path.join(parts.PATHS.app, 'index.html'),
         cache: true,
@@ -43,7 +44,7 @@ const developmentConfig = merge([
         { from: 'static', context: parts.PATHS.root, ignore: ['short_url.php'] },
       ]),
       // Ignore node_modules so CPU usage with poll watching drops significantly.
-      new webpack.WatchIgnorePlugin([parts.PATHS.node, parts.PATHS.build]),
+      new webpack.WatchIgnorePlugin([parts.PATHS.node, parts.PATHS.nodeHoisted, parts.PATHS.build]),
       // Enable multi-pass compilation for enhanced performance
       // in larger projects. Good default.
       // Waiting on: https://github.com/jantimon/html-webpack-plugin/issues/533
