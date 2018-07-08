@@ -40,12 +40,19 @@ $state-warning-bg:          theme-color('warning');
 $state-danger-text:         #fff;
 $state-danger-bg:           theme-color('danger');
 
+$input-bg: var(--body-bg);
+$input-color: var(--body-color);
+$input-border-color: var(--gray-lighter);
+$input-focus-bg: var(--body-bg);
+$input-focus-color: var(--body-color);
+$input-focus-border-color: $primary;
+$input-disabled-bg: var(--body-bg);
+
 // Element styles
 $mark-bg: transparent;
-$hr-border-color: var(--gray-lighter);
+$mark-padding: 0;
 
-$input-border-color: var(--gray-lighter);
-$input-disabled-bg: var(--gray-lighter);
+$hr-border-color: var(--gray-lighter);
 
 $dropdown-border-color: var(--gray-lighter);
 $dropdown-bg: var(--body-bg);

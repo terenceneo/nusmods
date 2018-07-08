@@ -11,11 +11,6 @@ $module-list-height: 13.5rem;
   height: $input-height;
   text-align: left;
   white-space: nowrap;
-
-  // Remove bootstrap's box-shadow
-  &:global(.form-control):focus {
-    box-shadow: none;
-  }
 }
 
 .modal {
