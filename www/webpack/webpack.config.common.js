@@ -33,6 +33,7 @@ const commonConfig = merge([
       },
       // Importing modules from these files will not require the extension.
       extensions: ['.js', '.jsx', '.json'],
+      symlinks: false,
     },
     // Entry accepts a path or an object of entries.
     // We'll be using the latter form given it's

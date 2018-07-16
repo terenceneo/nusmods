@@ -5,6 +5,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const AutoDllPlugin = require('autodll-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const WatchMissingNodeModulesPlugin = require('react-dev-utils/WatchMissingNodeModulesPlugin');
+const HardSourcePlugin = require('hard-source-webpack-plugin');
 
 const commonConfig = require('./webpack.config.common');
 const parts = require('./webpack.parts');
@@ -14,6 +15,7 @@ const developmentConfig = merge([
   parts.setFreeVariable('process.env.DEBUG_WORKBOX', process.env.DEBUG_WORKBOX),
   commonConfig,
   {
+    mode: 'development',
     // Use a fast source map for good-enough debugging usage
     // https://webpack.js.org/configuration/devtool/#devtool
     devtool: 'cheap-module-eval-source-map',
@@ -25,19 +27,17 @@ const developmentConfig = merge([
       'webpack/hot/only-dev-server',
       'main',
     ],
+    output: {
+      pathinfo: false,
+    },
     plugins: [
       // If you require a missing module and then `npm install` it, you still have
       // to restart the development server for Webpack to discover it. This plugin
       // makes the discovery automatic so you don't have to restart.
-      new WatchMissingNodeModulesPlugin(parts.PATHS.node),
+      // new WatchMissingNodeModulesPlugin(parts.PATHS.node),
       new HtmlWebpackPlugin({
         template: path.join(parts.PATHS.app, 'index.html'),
         cache: true,
-      }),
-      new AutoDllPlugin({
-        inject: true, // will inject the DLL bundles to index.html
-        filename: parts.DLL.FILE_FORMAT,
-        entry: parts.DLL.ENTRIES,
       }),
       // Copy files from static folder over (in-memory)
       new CopyWebpackPlugin([
@@ -45,15 +45,8 @@ const developmentConfig = merge([
       ]),
       // Ignore node_modules so CPU usage with poll watching drops significantly.
       new webpack.WatchIgnorePlugin([parts.PATHS.node, parts.PATHS.build]),
-      // Enable multi-pass compilation for enhanced performance
-      // in larger projects. Good default.
-      // Waiting on: https://github.com/jantimon/html-webpack-plugin/issues/533
       new webpack.HotModuleReplacementPlugin(),
-      // { multiStep: true }
-      // prints more readable module names in the browser console on HMR updates
-      new webpack.NamedModulesPlugin(),
-      // do not emit compiled assets that include errors
-      new webpack.NoEmitOnErrorsPlugin(),
+      new HardSourcePlugin(),
     ],
   },
   process.env.DEBUG_WORKBOX ? parts.workbox() : {},
@@ -61,14 +54,7 @@ const developmentConfig = merge([
     include: parts.PATHS.images,
   }),
   parts.loadCSS({
-    include: parts.PATHS.styles,
-  }),
-  parts.loadCSS({
-    include: parts.PATHS.scripts,
-    options: {
-      modules: true,
-      localIdentName: '[name]-[local]_[hash:base64:4]',
-    },
+    localIdentName: '[name]-[local]_[hash:base64:4]',
   }),
   parts.flow({ failOnError: false }),
 ]);

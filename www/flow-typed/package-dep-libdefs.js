@@ -11,3 +11,7 @@ declare module '@material/snackbar' {
 declare module 'bowser' {
   declare module.exports: any;
 }
+
+declare module 'mini-css-extract-plugin' {
+  declare module.exports: any;
+}

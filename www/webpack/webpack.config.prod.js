@@ -1,7 +1,6 @@
 const path = require('path');
 const merge = require('webpack-merge');
 const webpack = require('webpack');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
@@ -11,20 +10,11 @@ const parts = require('./webpack.parts');
 const nusmods = require('../src/js/apis/nusmods');
 const config = require('../src/js/config/app-config.json');
 
-/**
- * Extracts css into their own file.
- *
- * @see https://webpack.js.org/guides/code-splitting-css/
- * @see https://survivejs.com/webpack/styling/separating-css/
- */
-const extractTextPlugin = new ExtractTextPlugin('[name].[chunkhash].css', {
-  allChunks: true,
-});
-
 const productionConfig = merge([
   parts.setFreeVariable('process.env.NODE_ENV', 'production'),
   commonConfig,
   {
+    mode: 'production',
     // Don't attempt to continue if there are any errors.
     bail: true,
     // We generate sourcemaps in production. This is slow but gives good results.
@@ -38,34 +28,7 @@ const productionConfig = merge([
       // will work without but this is useful to set.
       chunkFilename: '[chunkhash].js',
     },
-    module: {
-      rules: [
-        {
-          test: /\.(css|scss)$/,
-          include: parts.PATHS.styles,
-          use: extractTextPlugin.extract({
-            use: parts.getCSSConfig(),
-            fallback: 'style-loader',
-          }),
-        },
-        {
-          test: /\.(css|scss)$/,
-          include: parts.PATHS.scripts,
-          use: extractTextPlugin.extract({
-            use: parts.getCSSConfig({
-              options: {
-                modules: true,
-                localIdentName: '[hash:base64:8]',
-              },
-            }),
-            fallback: 'style-loader',
-          }),
-        },
-      ],
-    },
     plugins: [
-      // SEE: https://medium.com/webpack/brief-introduction-to-scope-hoisting-in-webpack-8435084c171f
-      new webpack.optimize.ModuleConcatenationPlugin(),
       new HtmlWebpackPlugin({
         template: path.join(parts.PATHS.app, 'index.html'),
         minify: {
@@ -82,28 +45,21 @@ const productionConfig = merge([
         inline: /manifest/,
         preload: /\.js$/,
       }),
-      extractTextPlugin,
       // Copy files from static folder over to dist
       new CopyWebpackPlugin([{ from: 'static', context: parts.PATHS.root }], {
         copyUnmodified: true,
       }),
     ],
   },
+  parts.loadCSS({ localIdentName: '[hash:base64:8]' }),
   parts.workbox(),
   parts.clean(parts.PATHS.build),
-  parts.extractBundle({
-    name: 'vendor',
-    entries: parts.VENDOR,
-  }),
   parts.minifyJavascript(),
   parts.minifyCSS({
     options: {
       discardComments: {
         removeAll: true,
       },
-      // Run cssnano in safe mode to avoid
-      // potentially unsafe transformations.
-      safe: true,
     },
   }),
   // If the file size is below the specified limit

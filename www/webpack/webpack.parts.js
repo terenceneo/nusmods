@@ -6,6 +6,7 @@ const { GenerateSW } = require('workbox-webpack-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const MiniCSSExtractPlugin = require('mini-css-extract-plugin');
 const cssnano = require('cssnano');
 const FlowStatusWebpackPlugin = require('flow-status-webpack-plugin');
 const childProcess = require('child_process');
@@ -45,8 +46,6 @@ const VENDOR = [
   'history', // History module used by router
   'fbjs', // facebook deps
   'prop-types', // gone but not forgotten
-  'loader', // style loader fallbacks
-  'equal', // various comparison libs used by deps
 ];
 
 const DLL = {
@@ -86,32 +85,6 @@ exports.clean = (...pathsToBeCleaned) => ({
       // Without `root` CleanWebpackPlugin won't point to our
       // project and will fail to work.
       root: process.cwd(),
-    }),
-  ],
-});
-
-/**
- * For extracting chunks into different bundles for caching.
- *
- * @see https://webpack.js.org/plugins/commons-chunk-plugin/#options
- * @see https://survivejs.com/webpack/building/bundle-splitting/
- * @see https://survivejs.com/webpack/building/bundle-splitting/#loading-dependencies-to-a-vendor-bundle-automatically
- */
-exports.extractBundle = ({ name, entries }) => ({
-  plugins: [
-    // Extract bundle and manifest files. Manifest is
-    // needed for reliable caching.
-    new webpack.optimize.CommonsChunkPlugin({
-      names: [name],
-      minChunks: ({ resource }) =>
-        resource &&
-        resource.includes('node_modules') &&
-        resource.match(/\.js$/) &&
-        entries.some((entry) => resource.includes(entry)),
-    }),
-    new webpack.optimize.CommonsChunkPlugin({
-      names: 'manifest',
-      minChunks: Infinity,
     }),
   ],
 });
@@ -162,81 +135,81 @@ exports.transpileJavascript = ({ include, exclude, options }) => ({
  * @see https://webpack.js.org/plugins/uglifyjs-webpack-plugin/
  * @see https://survivejs.com/webpack/optimizing/minifying/
  */
-exports.minifyJavascript = () =>
-  // TODO: Use Babili instead when it's out of beta
-  // Currently breaks Timify.js
-  // SEE: https://webpack.js.org/plugins/babili-webpack-plugin/
-  /*
+exports.minifyJavascript = () => ({
   plugins: [
-    new BabiliPlugin({
-      mangle: {
-        blacklist: ['$'],
+    new UglifyJsPlugin({
+      sourceMap: true,
+      // See: https://github.com/mishoo/UglifyJS2/tree/harmony
+      uglifyOptions: {
+        // Don't beautify output (enable for neater output).
+        beautify: false,
+        // Eliminate comments.
+        comments: false,
+        // Compression specific options.
+        compress: {
+          // Two passes yield the most optimal results
+          passes: 2,
+        },
+        // Required to avoid Safari 10/11 bugs
+        safari10: true,
       },
-      removeConsole: false,
-      keepFnName: true,
     }),
   ],
-  */
-  ({
-    plugins: [
-      new UglifyJsPlugin({
-        sourceMap: true,
-        // See: https://github.com/mishoo/UglifyJS2/tree/harmony
-        uglifyOptions: {
-          // Don't beautify output (enable for neater output).
-          beautify: false,
-          // Eliminate comments.
-          comments: false,
-          // Compression specific options.
-          compress: {
-            // Two passes yield the most optimal results
-            passes: 2,
-          },
-          // Required to avoid Safari 10/11 bugs
-          safari10: true,
-        },
-      }),
-    ],
-  });
+});
 
-exports.getCSSConfig = ({ options } = {}) => [
-  ...insertIf(IS_DEV, 'cache-loader'), // Because css-loader is slow
-  {
-    loader: 'css-loader',
-    // Enable 'composes' from other scss files
-    options: { ...options, importLoaders: 2 },
-  },
-  {
-    loader: 'postcss-loader',
-    // See .postcssrc.js for plugin and plugin config
-  },
-  {
-    loader: 'sass-loader',
-    options: {
-      // @material packages uses '@material' directly as part of their import paths.
-      // Without this those imports will not resolve properly
-      includePaths: [PATHS.node],
+exports.getCSSConfig = ({ options } = {}) => {
+  const beforeLoaders = IS_DEV
+    ? // Use style-loader to inline styles and cache-loader to improve performance
+      ['style-loader', 'cache-loader']
+    : // Extract and deduplicate style chunks in production
+      [MiniCSSExtractPlugin.loader];
+
+  return [
+    ...beforeLoaders,
+    {
+      loader: 'css-loader',
+      // Enable 'composes' from other scss files
+      options: { ...options, importLoaders: 2 },
     },
-  },
-];
+    {
+      loader: 'postcss-loader',
+      // See .postcssrc.js for plugin and plugin config
+    },
+    {
+      loader: 'sass-loader',
+      options: {
+        // @material packages uses '@material' directly as part of their import paths.
+        // Without this those imports will not resolve properly
+        includePaths: [PATHS.node],
+      },
+    },
+  ];
+};
 
 /**
  * Enables importing CSS with Javascript. This is all in-memory.
  *
  * @see https://survivejs.com/webpack/styling/loading/
  */
-exports.loadCSS = ({ include, exclude, options } = {}) => ({
+exports.loadCSS = ({ localIdentName } = {}) => ({
   module: {
     rules: [
       {
         test: /\.(css|scss)$/,
-        include,
-        exclude,
-
-        use: [].concat('style-loader', exports.getCSSConfig({ options })),
+        include: exports.PATHS.styles,
+        use: exports.getCSSConfig(),
+      },
+      {
+        test: /\.(css|scss)$/,
+        include: exports.PATHS.scripts,
+        use: exports.getCSSConfig({
+          localIdentName,
+          modules: true,
+        }),
       },
     ],
   },
+  plugins: insertIf(!IS_DEV, new MiniCSSExtractPlugin()),
 });
 
 /**

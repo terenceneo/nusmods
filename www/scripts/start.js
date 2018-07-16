@@ -39,6 +39,7 @@ function runDevServer(host, port, exportPort, protocol, shouldOpenBrowser) {
       assets: false,
       chunks: false,
       chunkModules: false,
+      entrypoints: false,
       modules: false,
       errors: true,
       errorDetails: true,
