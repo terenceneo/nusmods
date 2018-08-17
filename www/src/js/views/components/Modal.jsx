@@ -24,17 +24,17 @@ export default class Modal extends Component<Props> {
     disableScrolling(this.props.isOpen);
   }
 
-  // noScroll must trigger before actual opening of modal
-  componentWillUpdate(nextProps: Props) {
-    if (this.props.isOpen !== nextProps.isOpen) {
-      disableScrolling(nextProps.isOpen);
-    }
-  }
-
   componentWillUnmount() {
     // Ensure noScroll is disabled if the component is unmounted without
     // the modal closing
     disableScrolling(false);
+  }
+
+  // noScroll must trigger before actual opening of modal
+  getSnapshotBeforeUpdate(prevProps: Props) {
+    if (this.props.isOpen !== prevProps.isOpen) {
+      disableScrolling(this.props.isOpen);
+    }
   }
 
   render() {
